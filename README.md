@@ -1,99 +1,108 @@
-# Kidai Plugin Remote
+# Kidai Plugin Remote · Rescue & Daily Manager for DeepSeek Harness
 
-A **standalone** plugin manager that runs completely outside DSH and DSH
-Desktop: it lists the installed DSH plugins the same way the Kidai Plugin
-Market does, toggles them, launches DSH Desktop with the selected plugin set,
-offers an isolated native-only run, and reports startup failures with conflict
-analysis and fix hints. No network marketplace — no DSH runtime required
-(besides Node.js ≥ 20 on the machine).
+> **The plugin manager that keeps working even when DSH is broken.**
 
-Built because restart-verification during Kidai market development repeatedly
-ended with "DSH won't open again": broken bundle lists, missing dependencies,
-and self-referencing `file:./node_modules/...` dependencies all fail at boot —
-when DSH itself can no longer start. This manager is the external rescue /
-daily-management tool for exactly that moment.
+List, toggle, launch, isolate, snapshot and roll back DeepSeek Harness (DSH)
+plugins — **completely outside DSH**. When DSH refuses to boot, this is the
+tool that gets you back in: disable the suspect plugin, roll back to a known
+good snapshot, or boot a native-only baseline for diagnosis.
 
-## Features
+**中文说明：[README.zh.md](README.zh.md)**
 
-- **Installed plugin list** — composed the same way the market does it:
-  profile manifest `dsh.profile.bundles` → each bundle's `cordis.patch.yml` →
-  profile-level and home-level patch layers → the desktop launcher overlay,
-  producing the real loader entry tree with native/third-party, enabled state,
-  version, path, install time.
-- **Sort / filter / views / force refresh** — by name/status/time, type
-  (third-party/native), status (enabled/disabled), keyword; wide/narrow rows.
-- **Enable / disable** — identical to the market's `setEnabled`: merge
-  `{id, disabled}` into `$DSH_HOME/cordis.patch.yml` with an automatic backup;
-  takes effect after restart (or live via HMR while DSH runs).
-- **Launch DSH Desktop** with the current selection, after an automatic
-  composition preflight.
-- **Isolated run** — disables ALL third-party plugins for this run: both the
-  desktop-private `plugin-management/state.json` (whole-bundle skip, works even
-  for broken packages) and entry-level home-patch rows; native DSH only. The
-  original configuration is **auto-restored when DSH exits** (or via
-  "结束隔离" manually).
-- **Success → auto-minimize** — detects DSH's own health-commit
-  (profile-selection active == lastKnownGood), minimizes the manager console
-  and collapses the page to a background monitor strip.
-- **Failure → diagnostic report** — exit code, stderr, desktop log excerpts,
-  crash dumps, selection-state rollback, plus **conflict analysis with fix
-  hints** (unresolvable bundles, missing `dsh.bundle`, broken patch files,
-  duplicate entry ids, unmatched patch rows, self-referencing deps, leftover
-  install-recovery transactions…).
-- **Preflight** — boot-free `dsh --profile <p> --dump-config` + local compose
-  validation.
-- No online marketplace component.
+[![standalone](https://img.shields.io/badge/standalone-outside%20DSH-4d8dff)](https://github.com/) · [![no-network-market](https://img.shields.io/badge/no-network-market-7c6fe0)]() · [![MIT](https://img.shields.io/badge/license-MIT-green)]()
 
-## Quick start
+---
 
-1. Double-click `启动 Kidai Plugin Remote.cmd` — opens the manager in an
-   app-mode browser window at `http://127.0.0.1:4877` (close the console to
-   stop the manager; DSH is unaffected).
-2. Or build the single-file exe once: `powershell -File scripts/build-exe.ps1`
-   (uses the in-box .NET Framework csc.exe, zero downloads) → run
-   `build\Kidai Plugin Remote.exe` (self-extracts to
-   `%LOCALAPPDATA%\KidaiPluginRemote\app`).
-3. Or run the source directly: `node server.js`
-   (`KPR_PORT`, `KPR_NO_OPEN=1`, `KPR_DATA`, `KPR_NODE` env overrides).
+## ✨ Highlights
 
-Read-only self-check (never launches DSH, never writes config):
+| | |
+|---|---|
+| **🛟 Rescue first** | Designed for the moment DSH won't open: isolated native-only run, one-click rollback, failure diagnosis with fix hints |
+| **📋 Same engine as the Kidai Market** | Plugin list composed exactly like the market reads it — bundle layers → profile patch → home patch → desktop overlay |
+| **🧊 One-shot isolation** | This run disables all third-party plugins; the previous config **auto-restores** on exit — even if the manager is killed, the in-DSH guard restores it on next launch |
+| **💾 Snapshot & rollback** | Every launch / config change keeps a pending snapshot; verified on the next successful run. Offline rollback of config + third-party package dirs |
+| **🩺 Startup failure reports** | Exit code, logs, crash dumps + conflict analysis and concrete fix hints |
+| **🧩 Plugin management** | Orphan scan / mount / file cleanup / uninstall with entry validation (Kidai Market Hub 1.3.4 parity) |
+| **🎨 Themed UI** | 8 color themes (dark / light / DS blue / sage / violet / teal / coral / rose), saved server-side |
+| **🧲 Full control** | 4 start modes (normal / isolated / preflight / report), auto-minimize on success |
+
+## 🚀 Quick start
+
+**Option A — zero-dependency desktop app (recommended for distribution)**
+
+Grab `Kidai Plugin Remote Client` from the companion repo
+[**kidai-plugin-remote-client**](https://github.com/) — download, unzip,
+double-click. No Node, no browser.
+
+**Option B — classic launcher**
 
 ```
-node scripts/self-check.mjs
+install.cmd          # one-click: checks Node, installs the in-DSH guard, desktop shortcut
+启动 Kidai Plugin Remote.cmd   # run directly
 ```
 
-## How it works
+or from source:
 
-- **Read** — `$DSH_HOME` (`DSH_HOME` or `~/.dsh`) → profiles → two-anchor
+```bash
+node server.js       # opens the manager at http://127.0.0.1:4877
+node scripts/self-check.mjs   # read-only self check
+```
+
+Requirements: **Node.js ≥ 20** on the machine (DSH itself is not needed).
+
+## 🔗 Ecosystem
+
+```
+kidai-plugin-remote         ← you are here: external manager (browser UI)
+kidai-plugin-remote-client  ← zero-dependency Electron desktop client
+kidai-snapshot-guard        ← in-DSH guard: snapshots, isolation recovery, notices
+```
+
+| Repo | Role | Runs where |
+|---|---|---|
+| **kidai-plugin-remote** | list/toggle/launch/isolate/rollback | outside DSH (standalone) |
+| **kidai-plugin-remote-client** | same manager, native window, no deps | outside DSH (standalone) |
+| **kidai-snapshot-guard** | snapshots, pending→verified, auto-recovery | inside DSH (plugin) |
+
+All three share one snapshot store (`$DSH_HOME/.kidai-snapshots`) and one
+guard directory (`$DSH_HOME/guard/`) — edit a snapshot note in any of them and
+the others see it.
+
+## 📸 How it works (technical)
+
+- **Read** — `$DSH_HOME` → profile manifest `dsh.profile.bundles` → two-anchor
   bundle resolution (DSH install first, then profile) → patch layers applied
-  in boot order with the include plugin's exact patch algorithm (`!!js`
-  expressions are parsed, never evaluated). The result matches what DSH
-  actually boots.
-- **Write** — toggles only touch the home-level `cordis.patch.yml` (same as the
-  market); isolation additionally writes the desktop's
-  `plugin-management/state.json` and restores both on exit.
-- **Launch** — spawns `DSH Desktop.exe` (auto-discovered, or `DSH_DESKTOP_DIR`);
+  in boot order with the include plugin's exact patch algorithm (`!!js` parsed,
+  never evaluated) → the real loader entry tree.
+- **Write** — toggles only touch the home-level `cordis.patch.yml` (identical
+  to the market); isolation additionally writes the desktop-private
+  `plugin-management/state.json` and restores both on exit or on the next
+  launch (one-shot guarantee, enforced by the in-DSH guard).
+- **Launch** — spawns `DSH Desktop.exe` (auto-discovered or `DSH_DESKTOP_DIR`);
   success = the desktop's own health-commit; failure evidence from exit code,
-  `%APPDATA%\DSH Desktop\logs`, `crash-evidence`, `profile-selection`, and
+  `%APPDATA%\DSH Desktop\logs`, `crash-evidence`, `profile-selection`,
   `plugin-install-recovery`.
-- **CLI checks** — `dsh --dump-config` needs Node ≥ 22; when the system node
-  is older the manager reuses the desktop's own runtime via
-  `ELECTRON_RUN_AS_NODE=1` (zero downloads), otherwise the button reports
-  "unavailable" while local composition still works.
+- **CLI checks** — `dsh --dump-config` needs Node ≥ 22; with an older system
+  node the manager reuses the desktop's own runtime via
+  `ELECTRON_RUN_AS_NODE=1` (zero downloads).
+- **Resilience** — any single broken bundle (corrupt manifest, missing
+  directory, bad patch) is skipped and reported, never fatal: the manager,
+  its client and its UI keep working so you can fix the culprit.
 
-## Layout
+## 🗂 Layout
 
 ```
 kidai-plugin-remote/
 ├── server.js                # HTTP + API on 127.0.0.1:4877
-├── lib/                     # dsh-env, patches, profile, inventory, conflicts, launcher
-├── public/                  # single-page UI (no build step)
-├── vendor/yaml/             # vendored yaml 2.9.0 (offline)
-├── scripts/                 # self-check.mjs, build-exe.ps1, minimize-console.ps1
+├── lib/                     # dsh-env · patches · profile · inventory · conflicts · plugin-mgmt · snapshots · launcher
+├── public/                  # single-page UI (no build step) + 8 themes
+├── vendor/yaml/             # vendored yaml 2.9.0 (fully offline)
+├── scripts/                 # self-check · test-* · install-guard · install-shortcut · build-exe
+├── install.cmd              # one-click install
 ├── 启动 Kidai Plugin Remote.cmd
 └── build/                   # packaged exe output
 ```
 
-## License
+## 📄 License
 
 MIT
