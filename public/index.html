@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kidai Plugin Remote · 纪代插件远程管理器</title>
+<link rel="stylesheet" href="/styles.css" />
+<script>
+  // Apply the saved theme before first paint to avoid a flash of the default.
+  (function () {
+    try {
+      var t = localStorage.getItem("kpr:theme:v1");
+      if (!t) return;
+      var valid = ["dark", "light", "ds-blue", "sage", "violet", "teal", "coral", "rose"];
+      var alias = { "light-ds": "ds-blue", "light-sage": "sage" };
+      document.documentElement.dataset.theme =
+        valid.indexOf(t) >= 0 ? t : (alias[t] || "");
+    } catch (e) { /* storage unavailable */ }
+  })();
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">K</span>
+    <div class="brand-text">
+      <strong>Kidai Plugin Remote</strong>
+      <span class="brand-sub">纪代插件远程管理器 · 脱离 DSH 的外部启停与启动工具</span>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span id="env-profile" class="chip" title="当前 profile">profile: —</span>
+    <span id="env-home" class="chip chip-muted" title="DSH_HOME">DSH_HOME: —</span>
+    <span id="guard-chip" class="chip chip-muted" hidden>内部守护 —</span>
+    <span id="snap-chip" class="chip chip-muted" hidden>快照 —</span>
+    <span id="run-pill" class="pill pill-unknown">DSH 状态检测中…</span>
+    <button id="btn-refresh" class="btn btn-ghost" type="button" title="强制刷新插件列表">⟳ 强制刷新</button>
+  </div>
+</header>
+
+<main class="layout">
+  <div class="tabbed">
+    <nav class="tabs" role="tablist">
+      <button class="tab-btn active" data-tab="installed" type="button" role="tab">已安装插件</button>
+      <button class="tab-btn" data-tab="snapshots" type="button" role="tab">快照与回滚</button>
+      <button class="tab-btn" data-tab="settings" type="button" role="tab">设置</button>
+    </nav>
+
+    <section id="tab-installed" class="tab-panel">
+      <div class="panel list-panel">
+        <div class="toolbar">
+          <div class="seg" role="group" aria-label="行视图">
+            <button class="seg-btn" data-view-mode="wide" type="button" title="宽横条：完整信息卡片">▦ 宽条</button>
+            <button class="seg-btn" data-view-mode="narrow" type="button" title="窄横条：紧凑单行">☰ 窄条</button>
+          </div>
+          <label class="search">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="search" type="search" placeholder="搜索插件名称 / 描述 / 条目 id" autocomplete="off" />
+            <button id="search-clear" class="search-clear" type="button" title="清空搜索" hidden>✕</button>
+          </label>
+          <label class="field">排序
+            <select id="sort">
+              <option value="name">名称</option>
+              <option value="status">状态</option>
+              <option value="time">安装时间</option>
+            </select>
+          </label>
+          <label class="field">类型
+            <select id="origin">
+              <option value="all">全部</option>
+              <option value="third-party">第三方</option>
+              <option value="native">原生</option>
+            </select>
+          </label>
+          <label class="field">状态
+            <select id="status-filter">
+              <option value="all">全部</option>
+              <option value="enabled">已启用</option>
+              <option value="disabled">已停用</option>
+            </select>
+          </label>
+        </div>
+
+        <div id="plugin-count" class="count-line"></div>
+        <div id="notice" class="notice" hidden></div>
+        <ul id="plugin-list" class="plugin-list" aria-live="polite"></ul>
+
+        <section id="orphans-section" class="orphans" hidden>
+          <h3 class="orphans-title">未运行的插件文件 <span id="orphans-count" class="count-chip"></span></h3>
+          <p class="orphans-hint">文件存在但未作为 loader 条目挂载的插件（手动安装、桌面插件管理停用或卸载残留）。已声明依赖的可「启用」重新挂载（同时清除桌面停用状态）；未声明的可「删除文件」清理。</p>
+          <ul id="orphans-list" class="orphans-list"></ul>
+        </section>
+      </div>
+    </section>
+
+    <section id="tab-snapshots" class="tab-panel" hidden>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>快照与回滚</h2>
+          <div class="head-actions">
+            <label class="check-label" title="导入恢复后，自动禁用备份之后新增/变更的插件（崩溃嫌疑）">
+              <input type="checkbox" id="import-disable" checked /> 禁用嫌疑
+            </label>
+            <label class="btn btn-ghost btn-sm file-btn">⇪ 导入 zip 恢复
+              <input id="import-zip" type="file" accept=".zip,application/zip" hidden />
+            </label>
+            <button id="btn-refresh-snapshots" class="btn btn-ghost btn-sm" type="button">⟳ 刷新</button>
+          </div>
+        </div>
+        <p class="hint">每次「配置变更」与「启动 DSH」前都会保留一版快照（pending），直到<b>下次成功运行</b>后转为「已验证」（内部守护插件或外部启动检测都会确认）。若某次更新后 DSH 无法启动，回滚到已验证快照可恢复配置 + 第三方插件目录（需重启 DSH 生效）。「导入 zip 恢复」可直接读取内部守护插件（KSG）导出的单个 zip 备份，在 DSH 无法启动时从外部恢复。</p>
+        <ul id="snapshot-list" class="snapshot-list"></ul>
+      </div>
+    </section>
+
+    <section id="tab-settings" class="tab-panel" hidden>
+      <div class="panel">
+        <h2>设置</h2>
+        <div class="setting-row">
+          <label><input type="checkbox" id="set-snapshot-launch" /> 启动 DSH 前自动创建快照</label>
+        </div>
+        <div class="setting-row">
+          <label><input type="checkbox" id="set-snapshot-mutate" /> 配置变更（启停 / 装载 / 卸载 / 删除）前自动创建快照</label>
+        </div>
+        <div class="setting-row">
+          <label>保留快照数上限 <input type="number" id="set-keep" min="1" max="100" style="width:70px" />（滚动保留最新，超限自动清理）</label>
+        </div>
+        <div class="setting-row setting-col">
+          <span>启动 DSH 成功后：</span>
+          <label class="radio-label"><input type="radio" name="after-launch" value="minimize" /> 最小化（保持后台监控，默认）</label>
+          <label class="radio-label"><input type="radio" name="after-launch" value="exit" /> 自动关闭（短时监控后退出，下次打开弹报告）</label>
+          <label class="radio-label"><input type="radio" name="after-launch" value="keep" /> 保留运行（不最小化不退出）</label>
+          <p class="hint">自动关闭模式仅对「非隔离启动」生效（隔离运行需保持值守以在 DSH 退出时恢复配置）。关闭 KPR 界面或终端时，另一方也会自动关闭。</p>
+        </div>
+        <h3>界面主题</h3>
+        <div class="theme-row" id="theme-picker">
+          <div class="theme-swatch" data-theme="dark" style="--sw-a:#4d8dff;--sw-b:#16181d"><span class="swatch-dot" aria-hidden="true"></span><span>暗色</span></div>
+          <div class="theme-swatch" data-theme="light" style="--sw-a:#3d6ef2;--sw-b:#f2f5fa"><span class="swatch-dot" aria-hidden="true"></span><span>浅色</span></div>
+          <div class="theme-swatch" data-theme="ds-blue" style="--sw-a:#4d6bfe;--sw-b:#eef1fb"><span class="swatch-dot" aria-hidden="true"></span><span>DS 蓝</span></div>
+          <div class="theme-swatch" data-theme="sage" style="--sw-a:#5c8f6e;--sw-b:#f1f5f2"><span class="swatch-dot" aria-hidden="true"></span><span>灰绿</span></div>
+          <div class="theme-swatch" data-theme="violet" style="--sw-a:#8b6cf0;--sw-b:#14111f"><span class="swatch-dot" aria-hidden="true"></span><span>紫罗兰</span></div>
+          <div class="theme-swatch" data-theme="teal" style="--sw-a:#2aa198;--sw-b:#0f1d1b"><span class="swatch-dot" aria-hidden="true"></span><span>青</span></div>
+          <div class="theme-swatch" data-theme="coral" style="--sw-a:#e8773e;--sw-b:#201310"><span class="swatch-dot" aria-hidden="true"></span><span>珊瑚</span></div>
+          <div class="theme-swatch" data-theme="rose" style="--sw-a:#e0658a;--sw-b:#fbf3f6"><span class="swatch-dot" aria-hidden="true"></span><span>玫瑰</span></div>
+        </div>
+        <h3>快捷方式</h3>
+        <div class="setting-row">
+          <button id="btn-create-shortcut" class="btn" type="button">发送快捷方式</button>
+          <span class="hint" id="shortcut-hint">选择放置位置后创建「Kidai Plugin Remote Client」快捷方式（仅独立 Client 版可用）</span>
+        </div>
+        <h3>环境信息</h3>
+        <dl class="info-grid" id="settings-info"></dl>
+        <h3>内部守护插件（kidai-snapshot-guard）</h3>
+        <p id="guard-status" class="hint">检测中…</p>
+        <div class="setting-actions">
+          <button id="btn-guard-dir" class="btn btn-ghost btn-sm" type="button">打开插件目录</button>
+          <button id="btn-snapshots-dir" class="btn btn-ghost btn-sm" type="button">打开快照目录</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <aside id="launch-column" class="panel launch-panel">
+    <h2>启动控制</h2>
+    <p class="hint" id="launch-hint">按当前勾选/启停状态启动 DSH Desktop；正常启动后管理器自动最小化。每次启动前自动保留快照。隔离运行仅本次启动有效，DSH 退出或下次启动时自动恢复原配置。</p>
+
+    <div class="launch-actions">
+      <button id="btn-launch" class="btn btn-primary btn-block" type="button">▶ 启动 DSH Desktop</button>
+      <button id="btn-isolate" class="btn btn-danger btn-block" type="button" title="临时禁用所有第三方插件，仅以原生插件启动；仅本次启动有效，DSH 退出或下次启动时自动恢复原配置">🧊 隔离运行（仅原生插件 · 一次性）</button>
+      <button id="btn-preflight" class="btn btn-ghost btn-block" type="button">🔍 启动前预检分析</button>
+    </div>
+
+    <div id="launch-status" class="launch-status" hidden>
+      <div class="launch-stage"><span class="spinner" aria-hidden="true"></span><span id="launch-stage-text">启动中…</span></div>
+      <ul id="launch-events" class="launch-events"></ul>
+    </div>
+
+    <div id="monitor" class="monitor" hidden>
+      <div class="monitor-head">
+        <span class="monitor-dot" aria-hidden="true"></span>
+        <div>
+          <strong id="monitor-title">DSH 已启动</strong>
+          <span id="monitor-detail" class="monitor-detail"></span>
+        </div>
+      </div>
+      <div class="monitor-actions">
+        <button id="btn-abort-isolate" class="btn btn-danger btn-sm" type="button">结束隔离并恢复配置</button>
+        <button id="btn-back-list" class="btn btn-ghost btn-sm" type="button">返回列表</button>
+      </div>
+    </div>
+
+    <h3>运行记录</h3>
+    <ul id="activity" class="activity"></ul>
+  </aside>
+</main>
+
+<!-- 预检/错误报告 modal -->
+<div id="report-modal" class="overlay" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="report-title">启动前预检分析</h3>
+      <button id="report-close" class="btn btn-ghost btn-sm" type="button">✕</button>
+    </div>
+    <div id="report-body" class="report-body"></div>
+  </div>
+</div>
+
+<!-- 快照备注 modal -->
+<div id="note-modal" class="overlay" hidden>
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>快照备注</h3>
+      <button id="note-close" class="btn btn-ghost btn-sm" type="button">✕</button>
+    </div>
+    <div class="report-body">
+      <p class="hint">给这个快照加个说明，方便以后分辨（最多 200 字）。</p>
+      <input id="note-input" type="text" maxlength="200" placeholder="例如：安装 dsh-ai-novel-writer 之前 / 更新 market-hub 后" />
+      <div class="report-actions">
+        <button id="note-save" class="btn btn-primary btn-sm" type="button">保存备注</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-root" class="toast-root" aria-live="polite"></div>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "name": "yaml-vendored",
+  "private": true,
+  "version": "2.9.0",
+  "type": "commonjs",
+  "license": "ISC"
+}

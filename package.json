@@ -1,0 +1,34 @@
+﻿{
+  "name": "kidai-plugin-remote",
+  "productName": "Kidai Plugin Remote 绾唬鎻掍欢杩滅▼绠＄悊鍣?,
+  "version": "1.2.6",
+  "description": "Kidai Plugin Remote (绾唬鎻掍欢杩滅▼绠＄悊鍣?: a standalone manager outside DSH and DSH Desktop that lists installed DSH plugins the same way the Kidai Plugin Market does, toggles them, launches DSH Desktop with the selected plugin set, offers an isolated native-only run, and reports startup failures with conflict analysis and fix hints. Plugin management: orphan scan / mount / file cleanup / uninstall with entry validation (hub 1.3.4 parity). Snapshot & rollback: every config change / launch keeps a pending snapshot until the next successful run (verified by the in-DSH kidai-snapshot-guard or KPR), with offline rollback of config + third-party package dirs. No network marketplace.",
+  "license": "MIT",
+  "type": "module",
+  "main": "server.js",
+  "bin": {
+    "kidai-plugin-remote": "server.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "check": "node scripts/self-check.mjs",
+    "test:snapshots": "node scripts/test-snapshots.mjs",
+    "build:exe": "powershell -ExecutionPolicy Bypass -File scripts/build-exe.ps1"
+  },
+  "dependencies": {},
+  "files": [
+    "server.js",
+    "lib/",
+    "public/",
+    "vendor/",
+    "scripts/",
+    "鍚姩 Kidai Plugin Remote.cmd",
+    "LICENSE",
+    "README.md",
+    "README.zh.md"
+  ]
+}
+

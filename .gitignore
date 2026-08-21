@@ -1,0 +1,17 @@
+# build artifacts (regenerable)
+build/
+dist/
+*.exe
+
+# runtime data
+.kpr-data/
+*.log
+
+# node
+node_modules/
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
