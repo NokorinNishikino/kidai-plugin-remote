@@ -1,106 +1,101 @@
-# Kidai Plugin Remote · Rescue & Daily Manager for DeepSeek Harness
+<div align="center">
 
-> **The plugin manager that keeps working even when DSH is broken.**
+# 🛟 Kidai Plugin Remote · 纪代插件远程管理器
 
-List, toggle, launch, isolate, snapshot and roll back DeepSeek Harness (DSH)
-plugins — **completely outside DSH**. When DSH refuses to boot, this is the
-tool that gets you back in: disable the suspect plugin, roll back to a known
-good snapshot, or boot a native-only baseline for diagnosis.
+**DSH 坏了也能用的插件管理器** —— 查看 · 启停 · 启动 · 隔离运行 · 快照 · 回滚
 
-**中文说明：[README.zh.md](README.zh.md)**
+**简体中文** · [**English**](README.en.md)
 
-[![standalone](https://img.shields.io/badge/standalone-outside%20DSH-4d8dff)](https://github.com/) · [![no-network-market](https://img.shields.io/badge/no-network-market-7c6fe0)]() · [![MIT](https://img.shields.io/badge/license-MIT-green)]()
+</div>
 
 ---
 
-## ✨ Highlights
+## ✨ 为什么用？
 
-| | |
-|---|---|
-| **🛟 Rescue first** | Designed for the moment DSH won't open: isolated native-only run, one-click rollback, failure diagnosis with fix hints |
-| **📋 Same engine as the Kidai Market** | Plugin list composed exactly like the market reads it — bundle layers → profile patch → home patch → desktop overlay |
-| **🧊 One-shot isolation** | This run disables all third-party plugins; the previous config **auto-restores** on exit — even if the manager is killed, the in-DSH guard restores it on next launch |
-| **💾 Snapshot & rollback** | Every launch / config change keeps a pending snapshot; verified on the next successful run. Offline rollback of config + third-party package dirs |
-| **🩺 Startup failure reports** | Exit code, logs, crash dumps + conflict analysis and concrete fix hints |
-| **🧩 Plugin management** | Orphan scan / mount / file cleanup / uninstall with entry validation (Kidai Market Hub 1.3.4 parity) |
-| **🎨 Themed UI** | 8 color themes (dark / light / DS blue / sage / violet / teal / coral / rose), saved server-side |
-| **🧲 Full control** | 4 start modes (normal / isolated / preflight / report), auto-minimize on success |
+DeepSeek Harness（DSH）的插件生态越来越丰富，但**启动失败往往来自插件本身**：
+损坏的 bundle 列表、缺失的依赖、自引用 `file:./node_modules/...` 依赖……一旦 DSH
+起不来，DSH 自己也救不了自己。**Kidai Plugin Remote** 就是为这种时刻准备的
+外部救援与日常管理工具——它在 DSH 之外运行，DSH 挂掉也能用。
 
-## 🚀 Quick start
+- 🛟 **先救援** —— 启动失败给出「退出码 + 日志 + 崩溃转储 + 冲突分析 + 修复提示」；
+  一键回滚到最近良好快照，或**隔离运行**纯原生基线进行分析
+- 📋 **与纪代市场同源** —— 插件列表用与市场完全相同的方式组合
+  （bundle 层 → profile 补丁 → home 补丁 → 桌面壳层），所见即 DSH 所载
+- 🧊 **隔离仅一次有效** —— 本次运行禁用全部第三方插件；退出自动恢复原配置，
+  即使管理器被杀，内部守护也会在下次启动时恢复
+- 💾 **快照与回滚** —— 每次启动 / 配置变更保留一版待确认快照，下次成功运行转为
+  「已验证」；离线回滚配置 + 第三方插件目录
+- 🧩 **插件管理** —— 孤儿扫描 / 装载 / 残留清理 / 卸载 + 入口校验（对齐市场 Hub 1.3.4）
+- 🎨 **8 套主题** —— 暗色 / 浅色 / DS 蓝 / 灰绿 / 紫罗兰 / 青 / 珊瑚 / 玫瑰，服务器端记忆
+- 🧲 **四种启动方式** —— 正常 / 隔离 / 预检分析 / 失败报告；成功自动最小化
 
-**Option A — zero-dependency desktop app (recommended for distribution)**
+> **无需理解任何技术细节** —— 打开即用；开发者也能享受完整的组合诊断。
 
-Grab `Kidai Plugin Remote Client` from the companion repo
-[**kidai-plugin-remote-client**](https://github.com/) — download, unzip,
-double-click. No Node, no browser.
+---
 
-**Option B — classic launcher**
+## 🚀 快速开始
+
+**方式 A — 零依赖桌面客户端（推荐分发）**
+
+使用配套仓库 [**kidai-plugin-remote-client**](https://github.com/NokorinNishikino/kidai-plugin-remote-client)
+的 `Kidai Plugin Remote Client.exe`：下载解压、双击即用。**不需要 Node、不需要浏览器。**
+
+**方式 B — 经典启动**
 
 ```
-install.cmd          # one-click: checks Node, installs the in-DSH guard, desktop shortcut
-启动 Kidai Plugin Remote.cmd   # run directly
+install.cmd                        # 一键安装：检查 Node、装入内部守护、创建桌面快捷方式
+启动 Kidai Plugin Remote.cmd       # 直接启动（浏览器独立窗口）
 ```
 
-or from source:
+源码直接跑：
 
 ```bash
-node server.js       # opens the manager at http://127.0.0.1:4877
-node scripts/self-check.mjs   # read-only self check
+node server.js                     # 打开管理器 http://127.0.0.1:4877
+node scripts/self-check.mjs        # 只读自检（不启动 DSH、不改配置）
 ```
 
-Requirements: **Node.js ≥ 20** on the machine (DSH itself is not needed).
+环境要求：本机 **Node.js ≥ 20**（不需要 DSH 本体）。
 
-## 🔗 Ecosystem
+---
 
-```
-kidai-plugin-remote         ← you are here: external manager (browser UI)
-kidai-plugin-remote-client  ← zero-dependency Electron desktop client
-kidai-snapshot-guard        ← in-DSH guard: snapshots, isolation recovery, notices
-```
+## 🔗 生态
 
-| Repo | Role | Runs where |
+| 仓库 | 职责 | 运行位置 |
 |---|---|---|
-| **kidai-plugin-remote** | list/toggle/launch/isolate/rollback | outside DSH (standalone) |
-| **kidai-plugin-remote-client** | same manager, native window, no deps | outside DSH (standalone) |
-| **kidai-snapshot-guard** | snapshots, pending→verified, auto-recovery | inside DSH (plugin) |
+| **kidai-plugin-remote**（你在这里） | 查看 / 启停 / 启动 / 隔离 / 回滚 | DSH 之外（独立程序） |
+| [**kidai-plugin-remote-client**](https://github.com/NokorinNishikino/kidai-plugin-remote-client) | 同一管理器，原生窗口，零依赖 | DSH 之外（独立程序） |
+| [**kidai-snapshot-guard**](https://github.com/NokorinNishikino/kidai-snapshot-guard) | 快照、待确认→已验证、隔离自动恢复 | DSH 内部（插件） |
 
-All three share one snapshot store (`$DSH_HOME/.kidai-snapshots`) and one
-guard directory (`$DSH_HOME/guard/`) — edit a snapshot note in any of them and
-the others see it.
+三者共享同一个快照存储（`$DSH_HOME/.kidai-snapshots`）与守护目录
+（`$DSH_HOME/guard/`）——在任意一端给快照加备注，另一端都能看到。
 
-## 📸 How it works (technical)
+---
 
-- **Read** — `$DSH_HOME` → profile manifest `dsh.profile.bundles` → two-anchor
-  bundle resolution (DSH install first, then profile) → patch layers applied
-  in boot order with the include plugin's exact patch algorithm (`!!js` parsed,
-  never evaluated) → the real loader entry tree.
-- **Write** — toggles only touch the home-level `cordis.patch.yml` (identical
-  to the market); isolation additionally writes the desktop-private
-  `plugin-management/state.json` and restores both on exit or on the next
-  launch (one-shot guarantee, enforced by the in-DSH guard).
-- **Launch** — spawns `DSH Desktop.exe` (auto-discovered or `DSH_DESKTOP_DIR`);
-  success = the desktop's own health-commit; failure evidence from exit code,
-  `%APPDATA%\DSH Desktop\logs`, `crash-evidence`, `profile-selection`,
-  `plugin-install-recovery`.
-- **CLI checks** — `dsh --dump-config` needs Node ≥ 22; with an older system
-  node the manager reuses the desktop's own runtime via
-  `ELECTRON_RUN_AS_NODE=1` (zero downloads).
-- **Resilience** — any single broken bundle (corrupt manifest, missing
-  directory, bad patch) is skipped and reported, never fatal: the manager,
-  its client and its UI keep working so you can fix the culprit.
+## 📸 技术细节
 
-## 🗂 Layout
+- **读取** — `$DSH_HOME` → profile manifest `dsh.profile.bundles` → 双锚点解析
+  （先 DSH 安装、后 profile）→ 按启动顺序应用补丁层（include 插件的精确算法，
+  `!!js` 只解析不评估）→ 真实 loader 条目树。
+- **写入** — 启停只写 home 级 `cordis.patch.yml`（与市场完全一致）；隔离额外写
+  桌面私有 `plugin-management/state.json`，退出或下次启动时自动还原。
+- **启动** — spawn `DSH Desktop.exe`（自动发现或 `DSH_DESKTOP_DIR`）；成功判定用
+  桌面端自己的 health-commit；失败证据来自退出码、`%APPDATA%\DSH Desktop\logs`、
+  `crash-evidence`、`profile-selection`、`plugin-install-recovery`。
+- **CLI 校验** — `dsh --dump-config` 需要 Node ≥ 22；系统 Node 过旧时自动改用
+  桌面自带运行时（`ELECTRON_RUN_AS_NODE=1`，零下载）。
+- **韧性** — 任何单个损坏的 bundle（manifest 损坏、目录缺失、补丁损坏）都会被
+  **跳过并报告，绝不致命**：管理器、客户端、界面都能继续工作。
 
 ```
 kidai-plugin-remote/
-├── server.js                # HTTP + API on 127.0.0.1:4877
+├── server.js                # HTTP + API（127.0.0.1:4877）
 ├── lib/                     # dsh-env · patches · profile · inventory · conflicts · plugin-mgmt · snapshots · launcher
-├── public/                  # single-page UI (no build step) + 8 themes
-├── vendor/yaml/             # vendored yaml 2.9.0 (fully offline)
+├── public/                  # 单页 UI（无构建步骤）+ 8 套主题
+├── vendor/yaml/             # 内置 yaml 2.9.0（完全离线）
 ├── scripts/                 # self-check · test-* · install-guard · install-shortcut · build-exe
-├── install.cmd              # one-click install
+├── install.cmd              # 一键安装
 ├── 启动 Kidai Plugin Remote.cmd
-└── build/                   # packaged exe output
+└── build/                   # exe 构建产物
 ```
 
 ## 📄 License
