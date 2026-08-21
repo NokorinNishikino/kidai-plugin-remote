@@ -39,13 +39,31 @@
    - 自动打开独立窗口（Edge/Chrome 应用模式）指向 `http://127.0.0.1:4877`
    - 关闭控制台窗口即停止管理器（DSH 本身不受影响）
 2. **封包 exe**：先构建一次 `scripts\build-exe.ps1`（零下载，用系统自带 .NET csc.exe），得到 `build\Kidai Plugin Remote.exe`——单个文件，双击即用，首次运行自解压到 `%LOCALAPPDATA%\KidaiPluginRemote\app`
-3. **直接跑源码**：`node server.js`（环境变量：`KPR_PORT` 端口、`KPR_NO_OPEN=1` 不自动开浏览器、`KPR_DATA` 数据目录、`KPR_NODE` 指定新版 node）
+3. **独立 Client（零依赖，推荐分发）**：`kidai-plugin-remote-client` 工程打包出 `dist\Kidai Plugin Remote Client.exe`——自带 Electron 运行时，**不需要 Node、不需要浏览器**，双击即打开原生窗口；构建见该工程 `build-client.ps1`（需先下载 Electron 发行版到 `vendor\`）
+4. **直接跑源码**：`node server.js`（环境变量：`KPR_PORT` 端口、`KPR_NO_OPEN=1` 不自动开浏览器、`KPR_DATA` 数据目录、`KPR_NODE` 指定新版 node）
 
 自检（只读，不启动 DSH、不改配置）：
 
 ```
 node scripts/self-check.mjs
 ```
+
+## 版本与分发（GitHub）
+
+当前版本 **1.2.6**。仓库结构：
+
+```
+kidai-plugin-remote/     # 管理器本体（node server + web UI + 构建脚本）
+kidai-plugin-remote-client/  # 独立 Electron 客户端（安装即用，零依赖）
+kidai-snapshot-guard/    # DSH 内部守护插件（快照的 DSH 内半边，随 DSH 启动）
+```
+
+**像插件一样安装即用的分发方式**：
+
+- **最省事**：把 `kidai-plugin-remote-client\dist\` 打包 zip 传到 GitHub Releases——用户下载解压、双击 `Kidai Plugin Remote Client.exe` 即用（自带 Electron，无需任何运行时）。
+- **经典版**：`build\Kidai Plugin Remote.exe` 单文件（需系统 Node ≥ 20 才能启动 DSH 的 CLI 校验；纯启停/快照功能可用）。
+- **源码安装**：`git clone` → 有 Node 的环境直接 `node server.js`。
+- 管理器与内部守护（KSG）通过 `$DSH_HOME\.kidai-snapshots` 与 `$DSH_HOME\guard\` 自动对接，两端版本独立、无需配对安装。
 
 ## 运行机制（与 DSH 的关系）
 
