@@ -178,7 +178,7 @@ function readLaunchReport() {
 }
 
 /** Directly write a launch notice into the in-DSH guard's notice file, so the
- * 纪代管理 page can show a success toast inside DSH without needing the port. */
+ * 纪代备份 page can show a success toast inside DSH without needing the port. */
 function writeKsgLaunchNotice(env, notice) {
   try {
     const dir = join(env.dshHome, "guard");
@@ -394,7 +394,7 @@ async function handleLaunch(env, profileName, mode) {
           // DSH directly), the in-DSH guard auto-restores on the next launch.
           state.result.note = "隔离仅本次启动有效：DSH 退出后自动恢复原插件配置；即使管理器不在值守，下次启动也会自动恢复。";
         }
-        // Success toast inside DSH (纪代管理 page) on EVERY launch, so the
+        // Success toast inside DSH (纪代备份 page) on EVERY launch, so the
         // user always gets in-DSH feedback that the run started cleanly.
         writeKsgLaunchNotice(env, {
           ok: true,
