@@ -69,6 +69,29 @@ Requirements: **Node.js ≥ 20** on the machine (DSH itself is not needed).
 
 ---
 
+## 📖 Usage guide
+
+1. **Start the manager** — double-click `启动 Kidai Plugin Remote.cmd`
+   (browser app window), or use the Client exe (native window)
+2. **Browse plugins** — the 已安装插件 tab: native/third-party badges, enabled
+   state, version, path, install time; sort / filter / wide-narrow views
+3. **Toggle plugins** — the inline switch writes `$DSH_HOME/cordis.patch.yml`
+   (the same write the market uses); effective after restart, or live via HMR
+   while DSH runs
+4. **Launch DSH** — 「▶ 启动 DSH Desktop」 on the right; run 「🔍 预检分析」
+   first to catch high-risk problems early (unresolved bundles, broken patches,
+   duplicate entries…)
+5. **Isolated run** — when DSH won't boot, use 「🧊 隔离运行」: disables all
+   third-party plugins for this launch, runs a native-only baseline for
+   diagnosis; the previous config auto-restores on exit
+6. **Snapshot & rollback** — every launch / change keeps a snapshot; on trouble,
+   go to 快照与回滚 and roll back to a verified snapshot (config + third-party
+   plugin dirs), restart DSH to return to the pre-change state
+7. **Failure reports** — a failed launch pops a diagnostic report: exit code,
+   log clues, conflict analysis with concrete fixes; 「复制报告」 to save it
+
+---
+
 ## 🔗 Ecosystem
 
 | Repo | Role | Runs where |
