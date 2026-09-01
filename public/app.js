@@ -1107,6 +1107,30 @@
       event.target.value = "";
     }
   });
+  $("import-env").addEventListener("change", async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const btn = $("btn-refresh-snapshots");
+    btn.disabled = true;
+    btn.textContent = "恢复中…";
+    try {
+      const response = await fetch(`/api/env-restore?profile=${encodeURIComponent(state.profile)}`, { method: "POST", body: file });
+      const payload = await response.json().catch(() => ({}));
+      const result = payload.result ?? {};
+      if (result.ok) {
+        toast("success", `完整环境已恢复：${result.restored} 个文件（恢复前已备份到 .kidai-remote-backups）。请重启 DSH 生效。`);
+        refreshPlugins();
+      } else {
+        toast("error", result.message ?? "恢复失败");
+      }
+    } catch (error) {
+      toast("error", `恢复失败：${error.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "⟳ 刷新";
+      event.target.value = "";
+    }
+  });
   $("btn-guard-dir").addEventListener("click", () => openPath($("btn-guard-dir").dataset.path ?? ""));
   $("btn-snapshots-dir").addEventListener("click", () => openPath($("btn-snapshots-dir").dataset.path ?? ""));
 

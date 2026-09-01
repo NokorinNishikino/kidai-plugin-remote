@@ -55,6 +55,7 @@ import {
   reconcilePendingSnapshots,
   importZipAndRestore,
   setSnapshotNote,
+  importFullEnvironmentZip,
 } from "./lib/snapshots.js";
 
 
@@ -607,6 +608,32 @@ const server = createServer(async (req, res) => {
       const result = await importZipAndRestore(env, profile, composed, buffer, { disableSuspected: url.searchParams.get("disableSuspected") === "1" });
       if (result.ok) log("info", `import-zip restore ok (${result.restored} items)`);
       else log("error", `import-zip restore failed: ${result.message}`);
+      sendJson(res, 200, { ok: true, result });
+      return;
+    }
+    if (path === "/api/env-restore" && req.method === "POST") {
+      const profile = profileFor(env);
+      if (env.desktopRunning) {
+        sendJson(res, 200, { ok: true, result: { ok: false, message: "DSH Desktop 正在运行，请先退出 DSH 再恢复完整环境。" } });
+        return;
+      }
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const buffer = Buffer.concat(chunks);
+      if (buffer.length === 0) {
+        sendJson(res, 200, { ok: true, result: { ok: false, message: "未收到 zip 内容" } });
+        return;
+      }
+      const tmp = join(managerDataDir(), `env-restore-${Date.now()}.zip`);
+      writeFileSync(tmp, buffer);
+      const result = importFullEnvironmentZip(env, env.dshHome, tmp, { userData: env.userData, profileName: profile });
+      try {
+        unlinkSync(tmp);
+      } catch {
+        /* ignore */
+      }
+      if (result.ok) log("info", `env-restore ok (${result.restored} files, ${result.linksBuilt} links)`);
+      else log("error", `env-restore failed: ${result.message}`);
       sendJson(res, 200, { ok: true, result });
       return;
     }
