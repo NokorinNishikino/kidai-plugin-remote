@@ -2,11 +2,18 @@
 
 All notable changes to **Kidai Plugin Remote (纪代插件远程管理器)** are documented here.
 
-## [Unreleased]
+## [1.3.4] - 2026-09-02
 
 ### Fixed
 
 - **Snapshots are reusable after a rollback** — a snapshot that was used as a rollback target (status `rolled-back`) is again a valid rollback candidate for both the manager UI and `rollbackCandidates()`, so you can roll back to `A`, then to `B`, then back to `A` again; each rollback keeps its pre-rollback snapshot for reversibility.
+
+### Performance
+
+- `probeEnvironment()` now computes the running desktop PIDs once (previously twice) and the `tasklist` probe is TTL-cached, so the 2s UI heartbeat and bursted `/api` calls no longer each spawn `tasklist`.
+- Static asset requests are served without probing the environment.
+- The snapshot `size` is stored in the snapshot meta at creation and read directly by `listSnapshots()` instead of recursively walking every snapshot directory on each list.
+- The activity-log poll is slowed from 3s to 5s.
 
 ## [1.2.7] - 2026-09-02
 
