@@ -2,6 +2,12 @@
 
 All notable changes to **Kidai Plugin Remote (纪代插件远程管理器)** are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- **Snapshots are reusable after a rollback** — a snapshot that was used as a rollback target (status `rolled-back`) is again a valid rollback candidate for both the manager UI and `rollbackCandidates()`, so you can roll back to `A`, then to `B`, then back to `A` again; each rollback keeps its pre-rollback snapshot for reversibility.
+
 ## [1.2.7] - 2026-09-02
 
 ### Added

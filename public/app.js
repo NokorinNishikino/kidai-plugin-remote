@@ -863,7 +863,9 @@
           const size = snap.size > 0 ? ` · ${(snap.size / 1024).toFixed(0)} KB` : "";
           const note = snap.note ? ` · <span class="snap-note" title="备注：${esc(snap.note)}">${esc(snap.note)}</span>` : "";
           const noteBtn = `<button type="button" class="btn btn-sm btn-ghost" data-action="snapshot-note" data-id="${esc(snap.id)}" title="添加/修改备注">备注</button>`;
-          const rollbackable = snap.status === "verified" || snap.status === "pending" || snap.status === "failed";
+          // A snapshot stays a valid rollback target even after it has been
+          // used once (its recorded state is intact) — allow re-rolling-back.
+          const rollbackable = snap.status === "verified" || snap.status === "pending" || snap.status === "failed" || snap.status === "rolled-back";
           const rollbackBtns = rollbackable
             ? `<button type="button" class="btn btn-sm btn-danger-soft rollback-btn ${confirmRollbackId === snap.id ? "confirming" : ""}" data-action="rollback" data-id="${esc(snap.id)}">${confirmRollbackId === snap.id ? "确认回滚？" : "回滚"}</button>` +
               `<button type="button" class="btn btn-sm btn-danger-soft rollback-btn" data-action="rollback-disable" data-id="${esc(snap.id)}" title="回滚并自动禁用快照之后新增/变更的插件（崩溃嫌疑）">回滚+禁用嫌疑</button>`
