@@ -466,9 +466,16 @@ async function handleLaunch(env, profileName, mode) {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? HOST}`);
   const path = url.pathname;
-  const env = probeEnvironment();
 
   try {
+    // Static assets (html/css/js/images) are served without probing the
+    // environment — probing spawns `tasklist` and reads the registry/FS, which
+    // is pure overhead for the frequent static requests during page loads.
+    if (!path.startsWith("/api/")) {
+      serveStatic(res, path);
+      return;
+    }
+    const env = probeEnvironment();
     if (path === "/api/env") {
       lastUiPing = Date.now();
       const profile = profileFor(env);

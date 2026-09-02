@@ -1381,6 +1381,6 @@
         }
       }
     }, 2000);
-    setInterval(refreshActivity, 3000);
+    setInterval(refreshActivity, 5000);
   })();
 })();
