@@ -32,7 +32,7 @@ ok(env.dshHome.length > 0, "resolve DSH_HOME");
 ok(env.activeProfile !== undefined, "resolve active profile");
 ok(env.install !== undefined, "locate DSH Desktop install");
 ok(env.desktopExe !== undefined, "locate DSH Desktop.exe");
-ok(env.dshCliEntry !== undefined, "locate packaged dsh CLI entry");
+ok(env.dshCliEntry !== undefined, "locate packaged dsh CLI entry (kind: " + (env.dshCliKind ?? "unknown") + ")");
 ok(env.userData !== undefined, "locate desktop user data");
 ok(env.selectionStatePath !== undefined, "locate profile-selection state");
 

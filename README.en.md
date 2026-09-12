@@ -119,9 +119,20 @@ the others see it.
   success = the desktop's own health-commit; failure evidence from exit code,
   `%APPDATA%\DSH Desktop\logs`, `crash-evidence`, `profile-selection`,
   `plugin-install-recovery`.
-- **CLI checks** — `dsh --dump-config` needs Node ≥ 22; with an older system
-  node the manager reuses the desktop's own runtime via
-  `ELECTRON_RUN_AS_NODE=1` (zero downloads).
+- **CLI checks** — `dsh --dump-config` runs the desktop's own packaged CLI
+  bootstrap (`resources\app.asar\lib\desktop-cli.js`) via
+  `DSH Desktop.exe --expose-internals` with `ELECTRON_RUN_AS_NODE=1` (zero
+  downloads); only when that bootstrap is absent does it fall back to a system
+  Node ≥ 22 running the legacy `bin.js` under `app.asar.unpacked`.
+- **Desktop 2.x archive layout** — install discovery only needs the executable
+  plus `resources` (2.x no longer ships `app.asar.unpacked\package.json`), and
+  the desktop's own `cordis.patch.yml` plus the archived core bundles
+  (`@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`, …) are read straight from
+  `app.asar`, so "installed inside the archive" is no longer misreported as a
+  missing dependency.
+- **Running-state probe** — when `tasklist` is denied, the manager probes the
+  single-instance lockfile for an exclusive hold (DSH Desktop keeps it open; its
+  mtime is written once at startup and cannot serve as a freshness signal).
 - **Resilience** — any single broken bundle (corrupt manifest, missing
   directory, bad patch) is skipped and reported, never fatal: the manager,
   its client and its UI keep working so you can fix the culprit.

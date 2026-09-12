@@ -100,8 +100,16 @@ node scripts/self-check.mjs        # 只读自检（不启动 DSH、不改配置
 - **启动** — spawn `DSH Desktop.exe`（自动发现或 `DSH_DESKTOP_DIR`）；成功判定用
   桌面端自己的 health-commit；失败证据来自退出码、`%APPDATA%\DSH Desktop\logs`、
   `crash-evidence`、`profile-selection`、`plugin-install-recovery`。
-- **CLI 校验** — `dsh --dump-config` 需要 Node ≥ 22；系统 Node 过旧时自动改用
-  桌面自带运行时（`ELECTRON_RUN_AS_NODE=1`，零下载）。
+- **CLI 校验** — `dsh --dump-config` 走桌面自带的 CLI 引导
+  （`resources\app.asar\lib\desktop-cli.js`，用 `ELECTRON_RUN_AS_NODE=1` 以
+  `DSH Desktop.exe --expose-internals` 运行，零下载）；仅当该引导缺失时才回退到
+  系统 Node（≥ 22）跑 `app.asar.unpacked` 里的旧式 `bin.js`。
+- **Desktop 2.x 归档布局** — 安装识别只要求「可执行文件 + resources」，不再要求
+  `app.asar.unpacked\package.json`（2.x 不再提供）；桌面自身的 `cordis.patch.yml`、
+  以及归档内的核心 bundle（`@deepseek-ai/dsh-base`、`@deepseek-ai/dsh-web-app` …）
+  都由内置的 asar 读取器解析，因此不会再把「装在 app.asar 里」误报成依赖缺失。
+- **运行态判定** — `tasklist` 被沙箱/权限拒绝时，改用单实例 lockfile 的独占占用探测
+  （DSH Desktop 运行期间一直持有该文件；它的 mtime 只在启动时写一次，不能当新鲜度用）。
 - **韧性** — 任何单个损坏的 bundle（manifest 损坏、目录缺失、补丁损坏）都会被
   **跳过并报告，绝不致命**：管理器、客户端、界面都能继续工作。
 

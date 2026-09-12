@@ -2,6 +2,15 @@
 
 All notable changes to **Kidai Plugin Remote (纪代插件远程管理器)** are documented here.
 
+## [1.3.5] - 2026-09-12
+
+### Fixed
+
+- **DSH Desktop was never found on Desktop 2.x** — `locateDesktopInstall()` required `resources\app.asar.unpacked\package.json`, which the 2.x installer does not ship (the unpacked directory only carries native modules), so `desktopExe` stayed undefined and every launch reported "未找到 DSH Desktop.exe". Discovery now accepts a root holding the executable plus `resources` (still honouring `DSH_DESKTOP_DIR` / `DSH_DESKTOP_EXE` and the registry), so the launch and isolated-run paths work again.
+- **The packaged `dsh` CLI was never found** — the CLI entry was hardcoded to `app.asar.unpacked\node_modules\@deepseek-ai\dsh\lib\bin.js`, which 2.x does not contain. The manager now resolves the desktop's own bootstrap (`resources\app.asar\lib\desktop-cli.js`) and runs it the way the app's `bin\dsh.cmd` shim does (`DSH Desktop.exe --expose-internals …` with `ELECTRON_RUN_AS_NODE=1`), falling back to the legacy unpacked entry, the host-command shim, and finally a system Node ≥ 22. `--dump-config` therefore works again (verified: 599-line compose dump through Electron-as-Node).
+- **"DSH Desktop is running" was misreported as stopped** — the `tasklist` probe is denied inside a sandbox/restricted child, and the lockfile fallback only trusted a lockfile younger than 60 s, while the live lockfile is written once at startup and never refreshed (196 minutes old on a running instance). The fallback now probes the lockfile for an exclusive hold, so a running desktop is detected with or without `tasklist`.
+- **Archived core bundles were treated as missing dependencies** — the preflight claimed `@deepseek-ai/dsh-base` / `@deepseek-ai/dsh-web-app` were not installed (and that DSH could not boot) because they live inside `app.asar`. A built-in asar reader now resolves archived bundle manifests and patches, and the desktop's own `cordis.patch.yml` is read from the archive too, so the desktop layer is no longer silently dropped from the composition (layers 15 → 17, composed rows 15 → 22, layer problems 2 → 0).
+
 ## [1.3.4] - 2026-09-02
 
 ### Fixed
